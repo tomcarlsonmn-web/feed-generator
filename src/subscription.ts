@@ -19,18 +19,31 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
 
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
-      .filter((create) => {
-        // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
-      })
-      .map((create) => {
-        // map alf-related posts to a db row
-        return {
-          uri: create.uri,
-          cid: create.cid,
-          indexedAt: new Date().toISOString(),
-        }
-      })
+     .filter((create) => {
+  // Michigan Lottery keyword filter
+  const text = (create.record.text || '').toLowerCase();
+
+  const keywords = [
+    'michigan lottery',
+    '#michiganlottery',
+    'mi lottery',
+    'michiganlottery.com',
+    'michigan20', // your promo code
+    'michigan lotto',
+    'michigan scratch-off',
+  ];
+
+  return keywords.some(k => text.includes(k));
+})
+.map((create) => {
+  // map Michigan Lottery posts to a db row
+  return {
+    uri: create.uri,
+    cid: create.cid,
+    indexedAt: new Date().toISOString(),
+  };
+})
+
 
     if (postsToDelete.length > 0) {
       await this.db
